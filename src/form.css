@@ -38,12 +38,48 @@
 }
 
 .notification {
-  margin: 20px auto;
-  padding: 10px;
-  background-color: #d4edda;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: #d4edda; /* Default success color */
   color: #155724;
-  border: 1px solid #c3e6cb;
+  padding: 15px;
   border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-size: 16px;
+  font-weight: bold;
   max-width: 600px;
   text-align: center;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.notification.success {
+  background-color: #d4edda; /* Green */
+  color: #155724;
+}
+
+.notification.error {
+  background-color: #f8d7da; /* Red */
+  color: #721c24;
+}
+
+.notification-enter {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+.notification-enter-active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.notification-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.notification-exit-active {
+  transform: translateY(-20px);
+  opacity: 0;
 }
