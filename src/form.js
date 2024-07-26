@@ -1,11 +1,7 @@
-// src/Form.js
 import React, { useState } from 'react';
-import { db } from './firebase';
-import { collection, addDoc } from 'firebase/firestore';
-import './Form.css'; // Import the CSS file for styling
-import './App.css'; // Import App.css for notification styling
+import './App.css';
 
-function Form() {
+const FormWithRating = () => {
   const [formData, setFormData] = useState({
     parentFullName: '',
     studentName: '',
@@ -14,8 +10,39 @@ function Form() {
     email: ''
   });
 
+  const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState('');
-  const [notificationType, setNotificationType] = useState(''); // Success, error, or submitting
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const [rating, setRating] = useState(0);
+
+  const validate = (fieldName, value) => {
+    let newErrors = { ...errors };
+    const namePattern = /^[a-zA-Z\s]+$/;
+    const contactPattern = /^\d{1,12}$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    switch (fieldName) {
+      case 'parentFullName':
+        newErrors.parentFullName = namePattern.test(value) ? '' : 'Please enter alphabets only';
+        break;
+      case 'studentName':
+        newErrors.studentName = namePattern.test(value) ? '' : 'Please enter alphabets only';
+        break;
+      case 'studentClass':
+        newErrors.studentClass = value ? '' : 'Class is required';
+        break;
+      case 'contact':
+        newErrors.contact = contactPattern.test(value) ? '' : 'Contact must be a number with up to 12 digits';
+        break;
+      case 'email':
+        newErrors.email = !value || emailPattern.test(value) ? '' : 'Invalid email address';
+        break;
+      default:
+        break;
+    }
+
+    setErrors(newErrors);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,42 +50,45 @@ function Form() {
       ...prevData,
       [name]: value
     }));
+
+    // Validate input in real-time
+    validate(name, value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const isValid = Object.keys(errors).every((key) => !errors[key]);
 
-    // Validation
-    if (!/^[a-zA-Z\s]+$/.test(formData.parentFullName)) {
-      setNotification('Parent Full Name should contain only letters and spaces.');
-      setNotificationType('error');
-      return;
-    }
-    if (!/^[a-zA-Z\s]+$/.test(formData.studentName)) {
-      setNotification('Student Name should contain only letters and spaces.');
-      setNotificationType('error');
-      return;
-    }
-    if (!/^[a-zA-Z0-9\s]+$/.test(formData.studentClass)) {
-      setNotification('Class should contain only letters and numbers.');
-      setNotificationType('error');
-      return;
-    }
-    if (!/^\d{1,12}$/.test(formData.contact)) {
-      setNotification('Contact should be a maximum of 12 digits.');
-      setNotificationType('error');
-      return;
-    }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setNotification('Email address is invalid.');
-      setNotificationType('error');
-      return;
+    if (!isValid) {
+      return; // If validation fails, do not submit the form
     }
 
-    try {
-      setNotification('Submitting...');
-      setNotificationType('submitting');
-      await addDoc(collection(db, 'submissions'), formData);
+    setNotification('Submitting...');
+
+    // Simulate form submission
+    setTimeout(() => {
+      setNotification('Thank you! Your form has been submitted successfully.');
+      setShowRatingPopup(true); // Show rating popup after submission
+
+      // Hide notification after 10 seconds
+      setTimeout(() => {
+        setNotification('');
+      }, 10000);
+    }, 2000); // Simulate a delay for form submission
+  };
+
+  const handleRating = (star) => {
+    setRating(star);
+  };
+
+  const handleRateClick = () => {
+    setShowRatingPopup(false);
+
+    // Simulate sending the rating to the server
+    setTimeout(() => {
+      // Reset rating after submission
+      setRating(0);
+      // Clear form data
       setFormData({
         parentFullName: '',
         studentName: '',
@@ -66,21 +96,30 @@ function Form() {
         contact: '',
         email: ''
       });
-      setNotification('Thank you! Your form has been submitted successfully.');
-      setNotificationType('success');
-    } catch (e) {
-      console.error('Error adding document: ', e);
-      setNotification('An error occurred. Please try again later.');
-      setNotificationType('error');
-    } finally {
-      // Hide notification after 5 seconds
-      setTimeout(() => setNotification(''), 5000);
-    }
+    }, 500); // Delay to allow the transition effect to complete
   };
 
   return (
-    <div>
-      <form className="form" onSubmit={handleSubmit}>
+    <div className="App">
+      <div className={`notification ${notification ? 'show' : ''}`}>
+        {notification}
+      </div>
+      <div className={`rating-popup ${showRatingPopup ? 'show' : 'hide'}`}>
+        <h2>Rate us!</h2>
+        <div className="stars">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <span
+              key={star}
+              className={`star ${star <= rating ? 'filled' : ''}`}
+              onClick={() => handleRating(star)}
+            >
+              ☆
+            </span>
+          ))}
+        </div>
+        <button onClick={handleRateClick}>Rate</button>
+      </div>
+      <form onSubmit={handleSubmit} className="form">
         <h2>Registration Form</h2>
         <input
           type="text"
@@ -90,6 +129,7 @@ function Form() {
           placeholder="Parent Full Name"
           required
         />
+        {errors.parentFullName && <div className="error-message">{errors.parentFullName}</div>}
         <input
           type="text"
           name="studentName"
@@ -98,6 +138,7 @@ function Form() {
           placeholder="Student Name"
           required
         />
+        {errors.studentName && <div className="error-message">{errors.studentName}</div>}
         <input
           type="text"
           name="studentClass"
@@ -106,6 +147,7 @@ function Form() {
           placeholder="Class"
           required
         />
+        {errors.studentClass && <div className="error-message">{errors.studentClass}</div>}
         <input
           type="text"
           name="contact"
@@ -114,23 +156,19 @@ function Form() {
           placeholder="Contact"
           required
         />
+        {errors.contact && <div className="error-message">{errors.contact}</div>}
         <input
           type="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Email"
-          required
+          placeholder="Email (optional)"
         />
+        {errors.email && <div className="error-message">{errors.email}</div>}
         <button type="submit">Submit</button>
       </form>
-      {notification && (
-        <div className={`notification ${notificationType} show`}>
-          {notification}
-        </div>
-      )}
     </div>
   );
-}
+};
 
-export default Form;
+export default FormWithRating;
