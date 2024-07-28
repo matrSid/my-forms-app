@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from './firebase'; // Ensure this matches the exported name in your firebase.js file
 import './App.css';
 
 const FormWithRating = () => {
@@ -51,7 +53,6 @@ const FormWithRating = () => {
       [name]: value
     }));
 
-    // Validate input in real-time
     validate(name, value);
   };
 
@@ -67,13 +68,20 @@ const FormWithRating = () => {
 
     // Simulate form submission
     setTimeout(() => {
-      setNotification('Thank you! Your form has been submitted successfully.');
-      setShowRatingPopup(true); // Show rating popup after submission
+      addDoc(collection(db, 'formData'), formData)
+        .then(() => {
+          setNotification('Thank you! Your form has been submitted successfully.');
+          setShowRatingPopup(true); // Show rating popup after submission
 
-      // Hide notification after 10 seconds
-      setTimeout(() => {
-        setNotification('');
-      }, 10000);
+          // Hide notification after 10 seconds
+          setTimeout(() => {
+            setNotification('');
+          }, 10000);
+        })
+        .catch((error) => {
+          setNotification('Failed to submit the form. Please try again.');
+          console.error('Error writing to Firestore:', error);
+        });
     }, 2000); // Simulate a delay for form submission
   };
 

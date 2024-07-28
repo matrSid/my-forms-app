@@ -1,6 +1,6 @@
 import React from 'react';
 import ParticlesBackground from './ParticlesBackground';
-import Form from './Form';
+import Form from './FormWithRating';
 import './App.css';
 
 function App() {
